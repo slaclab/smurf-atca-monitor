@@ -23,9 +23,8 @@ class AtcaIpmiMonitorBase():
     """
 
     def __init__(self, shelfmanager, min_period=-1.0):
-        print("Base __init__() called...")
 
-                # Add Logger
+        # Add Logger
         self._log = pyrogue.logInit(cls=self)
 
         # Set the maximum poll interval
