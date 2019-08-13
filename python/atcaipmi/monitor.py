@@ -63,10 +63,10 @@ class AtcaIpmiMonitorBase():
         # - sensor : sensor object
         # - value : sensor measurement
         self.sensors = {
-                'crate' : {
+                'Crate' : {
                     'fans' : {},
                     },
-                'slot' : {}
+                'Slots' : {}
                 }
 
     def _open_target(self, ipmb_address):
@@ -539,7 +539,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
         super().__init__(shelfmanager=shelfmanager, min_period=min_period)
 
         for i in range(2,8):
-            self.sensors['slot'][i] = {
+            self.sensors['Slots'][i] = {
                 'ID':               { 'value': ''  },
                 'Hot_Swap':         { 'type': '', 'sensor': None, 'value': 0.0 },
                 'IPMB_Physical':    { 'type': '', 'sensor': None, 'value': 0.0 },
@@ -561,8 +561,8 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                 'AMC_2_+12V_ADIN':  { 'type': '', 'sensor': None, 'value': 0.0 },
                 'FPGA_+12V_ADIN':   { 'type': '', 'sensor': None, 'value': 0.0 },
                 'RTM_+12V_ADIN':    { 'type': '', 'sensor': None, 'value': 0.0 },
-                'amc': {},
-                'rtm': {
+                'AMCs': {},
+                'RTM': {
                     'ID':                   { 'value': '' },
                     'Product_Mfg_Name':     { 'value': '' },
                     'Product_Name':         { 'value': '' },
@@ -574,7 +574,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
             }
 
             for j in [0,2]:
-                self.sensors['slot'][i]['amc'][j] = {
+                self.sensors['Slots'][i]['AMCs'][j] = {
                     'ID':                   { 'value': '' },
                     'Product_Mfg_Name':     { 'value': '' },
                     'Product_Part_Number':  { 'value': '' },
@@ -593,7 +593,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
         # Scan sensor for the crate
         self._open_target(ipmb_address=0x20)
-        self._scan_sensors(['crate'])
+        self._scan_sensors(['Crate'])
 
         # Start the polling thread in the background
         self.poll_thread = threading.Thread(target = self._polling)
@@ -623,7 +623,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
             # Read information about the crate
             self._open_target(0x20)
-            for n,s in self.sensors['crate'].items():
+            for n,s in self.sensors['Crate'].items():
                 if n == 'fans':
                     for fn,sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
@@ -644,7 +644,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
                 # Try to read the Carrier ID
                 id = self._read_id(slot=i, bay=4)
-                self.sensors['slot'][i]['ID']['value'] = id
+                self.sensors['Slots'][i]['ID']['value'] = id
                 if id:
                     # If a valid ID was read, read the sensors
 
@@ -653,7 +653,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                     if self.need_search_sensors[i]:
 
                         # Search the sensor in this slot
-                        self._search_sensors(['slot', i])
+                        self._search_sensors(['Slots', i])
 
                         # We don't need to search the sensor in the next cycle
                         self.need_search_sensors[i] = False
@@ -661,23 +661,23 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         # Read the AMCs IDs
                         for j in [0,2]:
                             id = self._read_id(slot=i, bay=j)
-                            self.sensors['slot'][i]['amc'][j]['ID']['value'] = id
+                            self.sensors['Slots'][i]['AMCs'][j]['ID']['value'] = id
                             if id:
                                 # If valid ID is read, read the info from the EEPROM
-                                self.sensors['slot'][i]['amc'][j].update(self._read_amc_eeprom(j).copy())
+                                self.sensors['Slots'][i]['AMCs'][j].update(self._read_amc_eeprom(j).copy())
 
                         # Read the RTM ID
                         id = self._read_id(slot=i, bay=5)
-                        self.sensors['slot'][i]['rtm']['ID']['value'] = id
+                        self.sensors['Slots'][i]['RTM']['ID']['value'] = id
                         if id:
                             # If a valid ID is read, read the info from the EEPROM
-                            self.sensors['slot'][i]['rtm'].update(self._read_rtm_eeprom())
+                            self.sensors['Slots'][i]['RTM'].update(self._read_rtm_eeprom())
 
                     # Read the sensors in this carrier
-                    for n,s in self.sensors['slot'][i].items():
+                    for n,s in self.sensors['Slots'][i].items():
                         try:
-                            if n not in ['ID', 'rtm', 'amc']:
-                                self.sensors['slot'][i][n]['value'] = self._read_sensor(s)
+                            if n not in ['ID', 'RTM', 'AMCs']:
+                                self.sensors['Slots'][i][n]['value'] = self._read_sensor(s)
                         except pyipmi.errors.IpmiTimeoutError:
                             self._log.error("IPMI TImeout error when trying to read slot # {}, {}".format(i, n))
                 else:
@@ -713,12 +713,12 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
         super().__init__(shelfmanager=shelfmanager, min_period=min_period)
 
         for i in range(2,8):
-            self.sensors['slot'][i] = {}
+            self.sensors['Slots'][i] = {}
 
         # Scan sensors
         # - Sensor for the crate
         self._open_target(ipmb_address=0x20)
-        self._scan_sensors(['crate'])
+        self._scan_sensors(['Crate'])
         # - Sensors for each slot
         for i in range(2,8):
             self._open_target(ipmb_address=0x80+2*i)
@@ -727,29 +727,29 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
             id = self._read_id(slot=i, bay=4)
             if id:
                 # If a valid ID was read, add it to the sensor dict
-                self.sensors['slot'][i]['ID'] = { 'value': id }
+                self.sensors['Slots'][i]['ID'] = { 'value': id }
 
                 # Now, try to read the AMCs IDs
                 for j in [0,2]:
                     id = self._read_id(slot=i, bay=j)
                     if id:
                         # If valid IDs are read, add them to the sensor dict
-                        if 'amc' not in self.sensors['slot'][i]:
-                            self.sensors['slot'][i]['amc'] = {}
-                        self.sensors['slot'][i]['amc'][j] = {}
-                        self.sensors['slot'][i]['amc'][j]['ID'] = { 'value': id }
-                        self.sensors['slot'][i]['amc'][j].update(self._read_amc_eeprom(j))
+                        if 'AMCs' not in self.sensors['Slots'][i]:
+                            self.sensors['Slots'][i]['AMCs'] = {}
+                        self.sensors['Slots'][i]['AMCs'][j] = {}
+                        self.sensors['Slots'][i]['AMCs'][j]['ID'] = { 'value': id }
+                        self.sensors['Slots'][i]['AMCs'][j].update(self._read_amc_eeprom(j))
 
                 # Finally, try to read the RTM ID
                 id = self._read_id(slot=i, bay=5)
                 if id:
                     # If a valid ID is read, add it to the sensor list
-                    self.sensors['slot'][i]['rtm'] = {}
-                    self.sensors['slot'][i]['rtm']['ID'] = { 'value': id }
-                    self.sensors['slot'][i]['rtm'].update(self._read_rtm_eeprom())
+                    self.sensors['Slots'][i]['RTM'] = {}
+                    self.sensors['Slots'][i]['RTM']['ID'] = { 'value': id }
+                    self.sensors['Slots'][i]['RTM'].update(self._read_rtm_eeprom())
 
             # Scan for sensors
-            self._scan_sensors(['slot', i])
+            self._scan_sensors(['Slots', i])
 
         # Start the polling thread in the background
         self.poll_thread = threading.Thread(target=self._polling)
@@ -780,7 +780,7 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
 
             # Read information about the crate
             self._open_target(0x20)
-            for n,s in self.sensors['crate'].items():
+            for n,s in self.sensors['Crate'].items():
                 if n == 'fans':
                     for fn,sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
@@ -799,10 +799,10 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                 # Open a connection to the specific slot IPMC
                 self._open_target(0x80+2*i)
 
-                for n,s in self.sensors['slot'][i].items():
+                for n,s in self.sensors['Slots'][i].items():
                     try:
-                        if n not in ['ID', 'rtm', 'amc']:
-                            self.sensors['slot'][i][n]['value'] = self._read_sensor(s)
+                        if n not in ['ID', 'RTM', 'AMCs']:
+                            self.sensors['Slots'][i][n]['value'] = self._read_sensor(s)
                     except pyipmi.errors.IpmiTimeoutError:
                         self._log.error("IPMI TImeout error when trying to read slot # {}, {}".format(i, n))
 
