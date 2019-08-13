@@ -64,8 +64,7 @@ class AtcaIpmiMonitorBase():
         # - value : sensor measurement
         self.sensors = {
                 'crate' : {
-                    'FAN_3_LEVEL' : {'value': 0 },
-                    'FAN_4_LEVEL' : {'value': 0 }
+                    'fans' : {},
                     },
                 'slot' : {}
                 }
@@ -150,6 +149,17 @@ class AtcaIpmiMonitorBase():
                     (value, states) = self.ipmi.get_sensor_reading(s.number)
                     # Add the sensor to the list
                     d[name] = { 'type' : 'compact', 'sensor' : s, 'value' : value }
+                # Look for fan trays, which are of type 'SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD'
+                # and name has 'FanTray' in it.
+                # Maybe there is a better way to find fans.
+                elif s.type is pyipmi.sdr.SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD:
+                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
+                    if 'FanTray' in name:
+                        d['fans'][name] = {
+                                'speed_level' : { 'fru_id': s.fru_device_id , 'value': 0 },
+                                'minimum_speed_level' : { 'value' : 0 },
+                                'maximum_speed_level' : { 'value' : 0 }
+                                }
             except pyipmi.errors.CompletionCodeError as e:
                 self._log.error("IPMI returned with completion code 0x{:02x} Error for this device (IPMB address = {})".format(ie.cc, self.ipmb_address))
                 return
@@ -614,10 +624,12 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
             # Read information about the crate
             self._open_target(0x20)
             for n,s in self.sensors['crate'].items():
-                if n == 'FAN_3_LEVEL':
-                    self.sensors['crate'][n]['value'] = self.ipmi.get_fan_level(3)[0]
-                elif n == 'FAN_4_LEVEL':
-                    self.sensors['crate'][n]['value'] = self.ipmi.get_fan_level(4)[0]
+                if n == 'fans':
+                    for fn,sn in s.items():
+                        fru_id = sn['speed_level']['fru_id']
+                        sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
+                        sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
+                        sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
                 else:
                     self.sensors['crate'][n]['value'] = self._read_sensor(s)
 
@@ -769,10 +781,12 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
             # Read information about the crate
             self._open_target(0x20)
             for n,s in self.sensors['crate'].items():
-                if n == 'FAN_3_LEVEL':
-                    self.sensors['crate'][n]['value'] = self.ipmi.get_fan_level(3)[0]
-                elif n == 'FAN_4_LEVEL':
-                    self.sensors['crate'][n]['value'] = self.ipmi.get_fan_level(4)[0]
+                if n == 'fans':
+                    for fn,sn in s.items():
+                        fru_id = sn['speed_level']['fru_id']
+                        sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
+                        sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
+                        sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
                 else:
                     self.sensors['crate'][n]['value'] = self._read_sensor(s)
 
