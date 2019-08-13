@@ -67,7 +67,7 @@ class BaseDevice(pyrogue.Device):
         d = ipmi.get_sensors(keys=keys)
         # - Add local variables for each sensor
         for n,s in d.items():
-            if not 'value' in n:
+            if not 'value' in s:
                 # If the dictionary doesn't have the 'value' field,
                 # it is a container. Expand it as a new device.
                 self.add(BaseDevice(
