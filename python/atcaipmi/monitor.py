@@ -631,11 +631,11 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
                         sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
                 else:
-                    self.sensors['crate'][n]['value'] = self._read_sensor(s)
+                    s['value'] = self._read_sensor(s)
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
-                    s['callback'](value = self.sensors['crate'][n]['value'])
+                    s['callback'](value = s['value'])
 
             ## Read information of devices on each slot
             for i in range(2,8):
@@ -788,11 +788,11 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                         sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
                         sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
                 else:
-                    self.sensors['crate'][n]['value'] = self._read_sensor(s)
+                    s['value'] = self._read_sensor(s)
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
-                    s['callback'](value = self.sensors['crate'][n]['value'])
+                    s['callback'](value = s['value'])
 
             ## Read information of devices on each slot
             for i in range(2,8):
