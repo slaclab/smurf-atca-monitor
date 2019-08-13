@@ -67,25 +67,16 @@ class BaseDevice(pyrogue.Device):
         d = ipmi.get_sensors(keys=keys)
         # - Add local variables for each sensor
         for n,s in d.items():
-            if n == 'rtm':
-                # Check if an RTM device is present. If so,
-                # it will be a new device in the tree
+            if not 'value' in n:
+                # If the dictionary doesn't have the 'value' field,
+                # it is a container. Expand it as a new device.
                 self.add(BaseDevice(
-                    name="RTM",
-                    description="RTM",
-                    keys=keys+['rtm'],
+                    name=str(n),
+                    description=str(n),
+                    keys=keys+[n],
                     ipmi=ipmi))
-            elif n == 'amc':
-                # Check if an AMC device is present. If so,
-                # each bay will be a new device in the tree
-                for bay,s1 in s.items():
-                    self.add(BaseDevice(
-                        name="AMC[{}]".format(bay),
-                        description="AMC on bay {}".format(bay),
-                        keys=keys+['amc', bay],
-                        ipmi=ipmi))
             else:
-                # Continue with the rest of the variables
+                # Otherwise, it is a value. Add a new variable.
                 self.add(pyrogue.LocalVariable(
                     name=n,
                     description=n,
@@ -110,17 +101,9 @@ class AtcaCrateRoot(pyrogue.Root):
         # Add information about the IPMI thread
         self.add(IpmiThread(ipmi=ipmi))
 
-        # Add local sensors
+        # Add all sensors
         self.add(BaseDevice(
-            name="LocalSensors",
-            description="Sensors on crate",
-            keys=['crate'],
+            name="Sensors",
+            description="Sensors on the crate",
+            keys=[],
             ipmi=ipmi))
-
-        # Add sensors on each slot
-        for i in range(2,8):
-            self.add(BaseDevice(
-                name="Slot_{}".format(i),
-                description="Sensor on carrier on slot {}".format(i),
-                keys=['slot', i],
-                ipmi=ipmi))
