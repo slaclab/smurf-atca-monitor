@@ -64,7 +64,7 @@ class AtcaIpmiMonitorBase():
         # - value : sensor measurement
         self.sensors = {
                 'Crate' : {
-                    'fans' : {},
+                    'FanTrays' : {},
                     },
                 'Slots' : {}
                 }
@@ -155,7 +155,7 @@ class AtcaIpmiMonitorBase():
                 elif s.type is pyipmi.sdr.SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD:
                     name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
                     if 'FanTray' in name:
-                        d['fans'][name] = {
+                        d['FanTrays'][name] = {
                                 'speed_level' : { 'fru_id': s.fru_device_id , 'value': 0 },
                                 'minimum_speed_level' : { 'value' : 0 },
                                 'maximum_speed_level' : { 'value' : 0 }
@@ -624,7 +624,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
             # Read information about the crate
             self._open_target(0x20)
             for n,s in self.sensors['Crate'].items():
-                if n == 'fans':
+                if n == 'FanTrays':
                     for fn,sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
                         sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
@@ -781,7 +781,7 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
             # Read information about the crate
             self._open_target(0x20)
             for n,s in self.sensors['Crate'].items():
-                if n == 'fans':
+                if n == 'FanTrays':
                     for fn,sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
                         sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
