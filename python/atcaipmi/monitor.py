@@ -322,7 +322,7 @@ class AtcaIpmiMonitorBase():
         """
         try:
             # Check if the sensor object exist.
-            if not sensor['sensor']:
+            if 'sensor' not in sensor:
                 return 0
 
             (value, states) = self.ipmi.get_sensor_reading(sensor['sensor'].number)
