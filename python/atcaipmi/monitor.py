@@ -64,7 +64,8 @@ class AtcaIpmiMonitorBase():
         # - value : sensor measurement
         self.sensors = {
                 'Crate' : {
-                    'FanTrays' : {},
+                    'FanTrays'  : {},
+                    'CrateInfo' : {},
                     },
                 'Slots' : {}
                 }
@@ -149,17 +150,36 @@ class AtcaIpmiMonitorBase():
                     (value, states) = self.ipmi.get_sensor_reading(s.number)
                     # Add the sensor to the list
                     d[name] = { 'type' : 'compact', 'sensor' : s, 'value' : value }
-                # Look for fan trays, which are of type 'SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD'
-                # and name has 'FanTray' in it.
-                # Maybe there is a better way to find fans.
+                # Device locators
                 elif s.type is pyipmi.sdr.SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD:
                     name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
+
+                    # Look for fan trays, which name contains 'FanTray'.
+                    # Maybe there is a better way to find fans.
                     if 'FanTray' in name:
                         d['FanTrays'][name] = {
                                 'speed_level' : { 'fru_id': s.fru_device_id , 'value': 0 },
                                 'minimum_speed_level' : { 'value' : 0 },
                                 'maximum_speed_level' : { 'value' : 0 }
                                 }
+
+                    # Look for the shelfmanager 1, which is called 'ShelfFRU1'.
+                    # We will be the crate information from it's 'product_info_area'
+                    # Maybe there is a better way to find the shelfmanager 1.
+                    elif name == 'ShelfFRU1':
+                        inv = self.ipmi.get_fru_inventory(s.fru_device_id)
+                        area = inv.product_info_area
+                        for k,v in area.__dict__.items():
+                            if k is not "data":
+                                if type(v) == pyipmi.fru.FruDataField:
+                                    field_name = k.replace(" ","_")
+                                    # The filed called 'name' creates a name collision when
+                                    # generating the register tree.
+                                    if field_name == 'name':
+                                        field_name = "Name"
+                                    field_val = ''.join("%c" % b for b in v.value).strip()
+                                    d['CrateInfo'][field_name] = { 'value' : field_val }
+
             except pyipmi.errors.CompletionCodeError as e:
                 self._log.error("IPMI returned with completion code 0x{:02x} Error for this device (IPMB address = {})".format(ie.cc, self.ipmb_address))
                 return
@@ -302,7 +322,7 @@ class AtcaIpmiMonitorBase():
         """
         try:
             # Check if the sensor object exist.
-            if not sensor['sensor']:
+            if 'sensor' not in sensor:
                 return 0
 
             (value, states) = self.ipmi.get_sensor_reading(sensor['sensor'].number)
@@ -630,6 +650,9 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
                         sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
                         sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
+                elif n == 'CrateInfo':
+                    # This information is static, so we don't need to update it.
+                    pass
                 else:
                     s['value'] = self._read_sensor(s)
 
@@ -787,6 +810,9 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                         sn['speed_level']['value'] = self.ipmi.get_fan_level(fru_id)[0]
                         sn['minimum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
                         sn['maximum_speed_level']['value'] = self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
+                elif n == 'CrateInfo':
+                    # This information is static, so we don't need to update it.
+                    pass
                 else:
                     s['value'] = self._read_sensor(s)
 
