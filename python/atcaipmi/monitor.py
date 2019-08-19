@@ -338,7 +338,7 @@ class AtcaIpmiMonitorBase():
             self._log.error("IPMI Timeout Error while reading sensor number {} at IPMB address {}.".format(sensor['sensor'].number, self.ipmb_address))
             return 0
 
-        def _read_fru_product_info(self, fru_id):
+    def _read_fru_product_info(self, fru_id):
         """
         Read the FRU product info area
 
