@@ -338,6 +338,55 @@ class AtcaIpmiMonitorBase():
             self._log.error("IPMI Timeout Error while reading sensor number {} at IPMB address {}.".format(sensor['sensor'].number, self.ipmb_address))
             return 0
 
+        def _read_fru_product_info(self, fru_id):
+        """
+        Read the FRU product info area
+
+        Args:
+            fru_id(int): FRU ID (0: Carrier, 1: RTM)
+
+        Returns:
+            dict: Product information.
+
+
+        Notes:
+            Before calling this method, a session must has already been opened
+            by calling the method _open_target(ipmb_address)
+        """
+
+        # Product information dict
+        product_info = {}
+
+        # Get the product info area for this fru.
+        area = self.ipmi.get_fru_inventory(fru_id).product_info_area
+        for k,v in area.__dict__.items():
+            if k is not "data":
+                if type(v) == pyipmi.fru.FruDataField:
+
+                    # Process the field name
+                    field_name = k.strip().replace(" ","_")
+
+                    # The filed called 'name' creates a name collision when
+                    # generating the register tree.
+                    if field_name == 'name':
+                        field_name = "Name"
+
+                    # Process the field value
+                    if field_name is 'serial_number':
+                        # The 'serial_number' field doesn't have the correct format.
+                        # It is stored as binary value, insrtead of a string.
+                        field_val = ''.join("{:02x}".format(ord(b)) for b in v.value)
+                    else:
+                        field_val = v.value.strip()
+
+                    if field_name == 'asset_tag':
+                        print("asset_tag = '{}'".format(field_val))
+
+                    # Add the processed info to the dict
+                    product_info[field_name] = { 'value': field_val }
+
+        return product_info
+
     def _read_amc_eeprom(self, bay):
         """
         Extract the FRU information from the AMC EEPROM.
@@ -560,7 +609,6 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
         for i in range(2,8):
             self.sensors['Slots'][i] = {
-                'ID':               { 'value': ''  },
                 'Hot_Swap':         { 'type': '', 'sensor': None, 'value': 0.0 },
                 'IPMB_Physical':    { 'type': '', 'sensor': None, 'value': 0.0 },
                 'Version_change':   { 'type': '', 'sensor': None, 'value': 0.0 },
@@ -581,17 +629,20 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                 'AMC_2_+12V_ADIN':  { 'type': '', 'sensor': None, 'value': 0.0 },
                 'FPGA_+12V_ADIN':   { 'type': '', 'sensor': None, 'value': 0.0 },
                 'RTM_+12V_ADIN':    { 'type': '', 'sensor': None, 'value': 0.0 },
-                'AMCs': {},
-                'RTM': {
-                    'ID':                   { 'value': '' },
-                    'Product_Mfg_Name':     { 'value': '' },
-                    'Product_Name':         { 'value': '' },
-                    'Product_Part_Number':  { 'value': '' },
-                    'Product_Version':      { 'value': '' },
-                    'Product_Serial_No':    { 'value': '' },
-                    'Product_Asset_Tag':    { 'value': '' }
-                }
+                'AMCs': {}
             }
+
+            for d in ['CarrierInfo','RTMInfo']:
+                self.sensors['Slots'][i][d] = {
+                        'ID':            { 'value': '' },
+                        'manufacturer':  { 'value': '' },
+                        'Name':          { 'value': '' },
+                        'part_number':   { 'value': '' },
+                        'version':       { 'value': '' },
+                        'serial_number': { 'value': '' },
+                        'asset_tag':     { 'value': '' },
+                        'fru_file_id':   { 'value': '' }
+                }
 
             for j in [0,2]:
                 self.sensors['Slots'][i]['AMCs'][j] = {
@@ -602,7 +653,6 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                     'Product_Serial_No':    { 'value': '' },
                     'Product_Asset_Tag':    { 'value': '' }
                 }
-
 
         # This flag indicates if we need to search for the sensors
         # defined in the sensor dictionary in each slot
@@ -667,13 +717,16 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
                 # Try to read the Carrier ID
                 id = self._read_id(slot=i, bay=4)
-                self.sensors['Slots'][i]['ID']['value'] = id
+                self.sensors['Slots'][i]['CarrierInfo']['ID']['value'] = id
                 if id:
-                    # If a valid ID was read, read the sensors
+                    # If a valid ID was read, read the info and sensors
 
                     # Check if we need to search for the sensors in this slot.
                     # We will read the IDs as well.
                     if self.need_search_sensors[i]:
+
+                        # Update the Carrier Information (fru_id=0)
+                        self.sensors['Slots'][i]['CarrierInfo'].update(self._read_fru_product_info(0).copy())
 
                         # Search the sensor in this slot
                         self._search_sensors(['Slots', i])
@@ -691,18 +744,19 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
 
                         # Read the RTM ID
                         id = self._read_id(slot=i, bay=5)
-                        self.sensors['Slots'][i]['RTM']['ID']['value'] = id
+                        self.sensors['Slots'][i]['RTMInfo']['ID']['value'] = id
                         if id:
-                            # If a valid ID is read, read the info from the EEPROM
-                            self.sensors['Slots'][i]['RTM'].update(self._read_rtm_eeprom())
+                            # If a valid ID is read, read the info (fru_id=1)
+                            self.sensors['Slots'][i]['RTMInfo'].update(self._read_fru_product_info(1).copy())
 
                     # Read the sensors in this carrier
                     for n,s in self.sensors['Slots'][i].items():
                         try:
-                            if n not in ['ID', 'RTM', 'AMCs']:
+                            if n not in ['ID', 'AMCs', 'CarrierInfo', 'RTMInfo']:
                                 self.sensors['Slots'][i][n]['value'] = self._read_sensor(s)
                         except pyipmi.errors.IpmiTimeoutError:
                             self._log.error("IPMI TImeout error when trying to read slot # {}, {}".format(i, n))
+
                 else:
                     # If we don't read a valid ID, we will need to search for sensors
                     # on the cycle we read a valid ID.
