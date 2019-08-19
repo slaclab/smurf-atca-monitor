@@ -379,9 +379,6 @@ class AtcaIpmiMonitorBase():
                     else:
                         field_val = v.value.strip()
 
-                    if field_name == 'asset_tag':
-                        print("asset_tag = '{}'".format(field_val))
-
                     # Add the processed info to the dict
                     product_info[field_name] = { 'value': field_val }
 
