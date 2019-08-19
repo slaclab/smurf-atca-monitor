@@ -626,7 +626,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                 'AMC_2_+12V_ADIN':  { 'type': '', 'sensor': None, 'value': 0.0 },
                 'FPGA_+12V_ADIN':   { 'type': '', 'sensor': None, 'value': 0.0 },
                 'RTM_+12V_ADIN':    { 'type': '', 'sensor': None, 'value': 0.0 },
-                'AMCs': {}
+                'AMCInfo': {}
             }
 
             for d in ['CarrierInfo','RTMInfo']:
@@ -642,7 +642,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                 }
 
             for j in [0,2]:
-                self.sensors['Slots'][i]['AMCs'][j] = {
+                self.sensors['Slots'][i]['AMCInfo'][j] = {
                     'ID':                   { 'value': '' },
                     'Product_Mfg_Name':     { 'value': '' },
                     'Product_Part_Number':  { 'value': '' },
@@ -734,10 +734,10 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         # Read the AMCs IDs
                         for j in [0,2]:
                             id = self._read_id(slot=i, bay=j)
-                            self.sensors['Slots'][i]['AMCs'][j]['ID']['value'] = id
+                            self.sensors['Slots'][i]['AMCInfo'][j]['ID']['value'] = id
                             if id:
                                 # If valid ID is read, read the info from the EEPROM
-                                self.sensors['Slots'][i]['AMCs'][j].update(self._read_amc_eeprom(j).copy())
+                                self.sensors['Slots'][i]['AMCInfo'][j].update(self._read_amc_eeprom(j).copy())
 
                         # Read the RTM ID
                         id = self._read_id(slot=i, bay=5)
@@ -749,7 +749,7 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                     # Read the sensors in this carrier
                     for n,s in self.sensors['Slots'][i].items():
                         try:
-                            if n not in ['ID', 'AMCs', 'CarrierInfo', 'RTMInfo']:
+                            if n not in ['ID', 'AMCInfo', 'CarrierInfo', 'RTMInfo']:
                                 self.sensors['Slots'][i][n]['value'] = self._read_sensor(s)
                         except pyipmi.errors.IpmiTimeoutError:
                             self._log.error("IPMI TImeout error when trying to read slot # {}, {}".format(i, n))
@@ -808,11 +808,11 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                     id = self._read_id(slot=i, bay=j)
                     if id:
                         # If valid IDs are read, add them to the sensor dict
-                        if 'AMCs' not in self.sensors['Slots'][i]:
-                            self.sensors['Slots'][i]['AMCs'] = {}
-                        self.sensors['Slots'][i]['AMCs'][j] = {}
-                        self.sensors['Slots'][i]['AMCs'][j]['ID'] = { 'value': id }
-                        self.sensors['Slots'][i]['AMCs'][j].update(self._read_amc_eeprom(j))
+                        if 'AMCInfo' not in self.sensors['Slots'][i]:
+                            self.sensors['Slots'][i]['AMCInfo'] = {}
+                        self.sensors['Slots'][i]['AMCInfo'][j] = {}
+                        self.sensors['Slots'][i]['AMCInfo'][j]['ID'] = { 'value': id }
+                        self.sensors['Slots'][i]['AMCInfo'][j].update(self._read_amc_eeprom(j))
 
                 # Finally, try to read the RTM ID
                 id = self._read_id(slot=i, bay=5)
@@ -878,7 +878,7 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
 
                 for n,s in self.sensors['Slots'][i].items():
                     try:
-                        if n not in ['ID', 'RTM', 'AMCs']:
+                        if n not in ['ID', 'RTM', 'AMCInfo']:
                             self.sensors['Slots'][i][n]['value'] = self._read_sensor(s)
                     except pyipmi.errors.IpmiTimeoutError:
                         self._log.error("IPMI TImeout error when trying to read slot # {}, {}".format(i, n))
