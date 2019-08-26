@@ -5,9 +5,15 @@ import subprocess
 import os
 import time
 import sys
+import logging
+import rogue
 import pyrogue
 import pyrogue.gui
 import pyrogue.protocols.epics
+
+# Setup the logger level to 'Error' by default
+logger = logging.getLogger('pyrogue')
+logger.setLevel(rogue.Logging.Error)
 
 # Import the ATCA IPMI monitor (Static or DYnamic version)
 #from atcaipmi.monitor import AtcaIpmiDynamicMonitor as AtcaIpmiMonitor
