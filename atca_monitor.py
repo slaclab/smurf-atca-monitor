@@ -99,22 +99,15 @@ if __name__ == "__main__":
     epics = pyrogue.protocols.epics.EpicsCaServer(base=epics_prefix, root=root)
     epics.start()
 
-    # Create the GUI
     if use_gui:
+        # Create the GUI
         import pyrogue.pydm
         pyrogue.pydm.runPyDM(root=root)
 
         print("GUI was closed...")
     else:
         # Stop the server when Crtl+C is pressed
-        print("")
-        print("Running without GUI. Press Ctrl+C to stop...")
-        try:
-            # Wait for Ctrl+C
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
+        pyrogue.waitCntrlC()
 
         print("Closing server...")
 
