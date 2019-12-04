@@ -8,7 +8,6 @@ import sys
 import logging
 import rogue
 import pyrogue
-import pyrogue.gui
 import pyrogue.protocols.epics
 
 # Setup the logger level to 'Error' by default
@@ -92,7 +91,7 @@ if __name__ == "__main__":
     ipmi = AtcaIpmiMonitor(shelfmanager=shelfmanager)
 
     # Create the ATCA crate root object
-    root = AtcaCrateRoot(ipmi=ipmi)
+    root = AtcaCrateRoot(ipmi=ipmi, serverPort=9100)
     root.start()
 
     # Create the EPICS server
@@ -100,32 +99,15 @@ if __name__ == "__main__":
     epics = pyrogue.protocols.epics.EpicsCaServer(base=epics_prefix, root=root)
     epics.start()
 
-    # Create the GUI
     if use_gui:
-        print("Starting GUI...\n")
-        app_top = pyrogue.gui.application(sys.argv)
-        app_top.setApplicationName("IPMI monitor for {}".format(shelfmanager))
-        gui_top = pyrogue.gui.GuiTop(group='GuiTop')
-        gui_top.resize(800, 1000)
-        gui_top.addTree(root)
-
-        try:
-            app_top.exec_()
-        except KeyboardInterrupt:
-            # Catch keyboard interrupts while the GUI was open
-            pass
+        # Create the GUI
+        import pyrogue.pydm
+        pyrogue.pydm.runPyDM(root=root)
 
         print("GUI was closed...")
     else:
         # Stop the server when Crtl+C is pressed
-        print("")
-        print("Running without GUI. Press Ctrl+C to stop...")
-        try:
-            # Wait for Ctrl+C
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
+        pyrogue.waitCntrlC()
 
         print("Closing server...")
 

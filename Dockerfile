@@ -1,4 +1,4 @@
-FROM tidair/smurf-rogue:R2.0.0
+FROM tidair/smurf-rogue:R2.4.2
 
 # Install pyipmi
 RUN pip3 install python-ipmi

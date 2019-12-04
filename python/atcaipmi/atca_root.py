@@ -95,8 +95,8 @@ class AtcaCrateRoot(pyrogue.Root):
     Returns:
         None.
     """
-    def __init__(self, ipmi, **kargs):
-        super().__init__(name='Crate', description='ATCA crate', **kargs)
+    def __init__(self, ipmi, serverPort=0, **kargs):
+        super().__init__(name='Crate', description='ATCA crate', serverPort=serverPort, **kargs)
 
         # Add information about the IPMI thread
         self.add(IpmiThread(ipmi=ipmi))

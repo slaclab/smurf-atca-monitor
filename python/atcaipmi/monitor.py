@@ -139,20 +139,20 @@ class AtcaIpmiMonitorBase():
             try:
                 # Full sensors
                 if s.type is pyipmi.sdr.SDR_TYPE_FULL_SENSOR_RECORD:
-                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
+                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_").replace(".", "_")
                     (value, states) = self.ipmi.get_sensor_reading(s.number)
                     if value is not None:
                         # Add the sensor to the list
                         d[name] = { 'type' : 'full', 'sensor' : s, 'value' : s.convert_sensor_raw_to_value(value) }
                 # Compact sensors
                 elif s.type is pyipmi.sdr.SDR_TYPE_COMPACT_SENSOR_RECORD:
-                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
+                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_").replace(".", "_")
                     (value, states) = self.ipmi.get_sensor_reading(s.number)
                     # Add the sensor to the list
                     d[name] = { 'type' : 'compact', 'sensor' : s, 'value' : value }
                 # Device locators
                 elif s.type is pyipmi.sdr.SDR_TYPE_FRU_DEVICE_LOCATOR_RECORD:
-                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_")
+                    name = ''.join("%c" % b for b in s.device_id_string).replace(" ","_").replace(".", "_")
 
                     # Look for fan trays, which name contains 'FanTray'.
                     # Maybe there is a better way to find fans.
