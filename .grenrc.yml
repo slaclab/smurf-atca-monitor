@@ -1,0 +1,12 @@
+---
+  dataSource: "prs"
+  onlyMilestones: false
+  # Group the release notes in three categories,
+  # based on the PR labels
+  groupBy:
+    "Bugs:":
+    - "bug"
+    "Enhancements:":
+    - "enhancement"
+  template:
+    "issue": "- {{url}} {{name}}"
