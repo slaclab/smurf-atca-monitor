@@ -801,19 +801,30 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                 if n == 'FanTrays':
                     for fn, sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
-                        sn['speed_level']['value'] = \
-                            self.ipmi.get_fan_level(fru_id)[0]
-                        sn['minimum_speed_level']['value'] = \
-                            self.ipmi.get_fan_speed_properties(
-                                fru_id).minimum_speed_level
-                        sn['maximum_speed_level']['value'] = \
-                            self.ipmi.get_fan_speed_properties(
-                                fru_id).maximum_speed_level
+                        try:
+                            sn['speed_level']['value'] = \
+                                self.ipmi.get_fan_level(fru_id)[0]
+                            sn['minimum_speed_level']['value'] = \
+                                self.ipmi.get_fan_speed_properties(
+                                    fru_id).minimum_speed_level
+                            sn['maximum_speed_level']['value'] = \
+                                self.ipmi.get_fan_speed_properties(
+                                    fru_id).maximum_speed_level
+                        except Exception as e:
+                            self._log.error(
+                                f"{datetime.now()} : Exception while trying "
+                                "to read the fan speed levels (fru_id = "
+                                f"{fru_id}): {e}\n")
                 elif n == 'CrateInfo':
                     # This information is static, we don't need to update it.
                     pass
                 else:
-                    s['value'] = self._read_sensor(s)
+                    try:
+                        s['value'] = self._read_sensor(s)
+                    except Exception as e:
+                        self._log.error(
+                            f"{datetime.now()} : Exception while trying to "
+                            f"read sensor {n}: {e}\n")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
@@ -981,19 +992,30 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                 if n == 'FanTrays':
                     for fn, sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
-                        sn['speed_level']['value'] = \
-                            self.ipmi.get_fan_level(fru_id)[0]
-                        sn['minimum_speed_level']['value'] = \
-                            self.ipmi.get_fan_speed_properties(
-                                fru_id).minimum_speed_level
-                        sn['maximum_speed_level']['value'] = \
-                            self.ipmi.get_fan_speed_properties(
-                                fru_id).maximum_speed_level
+                        try:
+                            sn['speed_level']['value'] = \
+                                self.ipmi.get_fan_level(fru_id)[0]
+                            sn['minimum_speed_level']['value'] = \
+                                self.ipmi.get_fan_speed_properties(
+                                    fru_id).minimum_speed_level
+                            sn['maximum_speed_level']['value'] = \
+                                self.ipmi.get_fan_speed_properties(
+                                    fru_id).maximum_speed_level
+                        except Exception as e:
+                            self._log.error(
+                                f"{datetime.now()} : Exception while trying "
+                                "to read the fan speed levels (fru_id = "
+                                f"{fru_id}): {e}\n")
                 elif n == 'CrateInfo':
                     # This information is static, so we don't need to update it
                     pass
                 else:
-                    s['value'] = self._read_sensor(s)
+                    try:
+                        s['value'] = self._read_sensor(s)
+                    except Exception as e:
+                        self._log.error(
+                            f"{datetime.now()} : Exception while trying to "
+                            f"read sensor {n}: {e}\n")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
