@@ -16,7 +16,7 @@ The pyrogue tree is populate dynamically from the list of sensors in the crate.
 
 ## Docker image
 
-When a tag is pushed to this github repository, a new Docker image is automatically built and push to its [Dockerhub repository](https://hub.docker.com/r/tidair/smurf-atca-monitor) using travis.
+When a tag is pushed to this github repository, a new Docker image is automatically built and push to its [Dockerhub repository](https://hub.docker.com/r/tidair/smurf-atca-monitor) using GitHub Actions.
 
 The resulting docker image is tagged with the same git tag string (as returned by `git describe --tags --always`).
 
