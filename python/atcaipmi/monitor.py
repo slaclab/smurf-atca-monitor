@@ -823,8 +823,8 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         s['value'] = self._read_sensor(s)
                     except Exception as e:
                         self._log.error(
-                            f"{datetime.now()} : Exception while trying to "
-                            f"read sensor {n}: {e}\n")
+                            f"{datetime.now()} : Unexpected exception while "
+                            f"trying to read sensor {n}: {e}\n")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
@@ -880,11 +880,11 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                                          'RTMInfo']:
                                 self.sensors['Slots'][i][n]['value'] = \
                                     self._read_sensor(s)
-                        except pyipmi.errors.IpmiTimeoutError:
+                        except Exception as e:
                             self._log.error(
-                                "IPMI TImeout error when trying to read "
-                                "slot # {}, {}".format(i, n))
-
+                                f"{datetime.now()} : Unexpected exception "
+                                f"while trying to read sensor {n} on "
+                                f"slot # {i}: {e}")
                 else:
                     # If we don't read a valid ID, we will need to search for
                     # sensors on the cycle we read a valid ID.
@@ -1014,8 +1014,8 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                         s['value'] = self._read_sensor(s)
                     except Exception as e:
                         self._log.error(
-                            f"{datetime.now()} : Exception while trying to "
-                            f"read sensor {n}: {e}\n")
+                            f"{datetime.now()} : Unexpected exception while "
+                            f"trying to read sensor {n}: {e}\n")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
@@ -1031,10 +1031,10 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                         if n not in ['ID', 'RTM', 'AMCInfo']:
                             self.sensors['Slots'][i][n]['value'] = \
                                 self._read_sensor(s)
-                    except pyipmi.errors.IpmiTimeoutError:
+                    except Exception as e:
                         self._log.error(
-                            "IPMI TImeout error when trying to read "
-                            "slot # {}, {}".format(i, n))
+                            f"{datetime.now()} : Unexpected exception while "
+                            f"trying to read sensor {n} on slot # {i}: {e}")
 
             # Update the poll period
             self.poll_period = time.time() - now
