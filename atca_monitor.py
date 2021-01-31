@@ -3,7 +3,6 @@
 import argparse
 import subprocess
 import os
-import sys
 import logging
 import rogue
 import pyrogue
@@ -15,10 +14,6 @@ from atcaipmi.monitor import AtcaIpmiStaticMonitor as AtcaIpmiMonitor
 
 # Import the Root, which includes a device for the while ATCA crate
 from atcaipmi.atca_root import AtcaCrateRoot
-
-# Setup the logger level to 'Error' by default
-logger = logging.getLogger('pyrogue')
-logger.setLevel(rogue.Logging.Error)
 
 
 def get_args():
@@ -44,10 +39,27 @@ def get_args():
              '(default: the shelfmanager node name)')
 
     parser.add_argument(
+        '--port', '-p',
+        type=int,
+        required=False,
+        default=9100,
+        dest='port_number',
+        help='Rogue server port number (default: 9100)')
+
+    parser.add_argument(
         '--gui', '-g',
         action='store_true',
         dest='use_gui',
         help='Start the server with a GUI')
+
+    parser.add_argument(
+        '--log-level',
+        type=str,
+        required=False,
+        choices=['info', 'warning', 'error'],
+        default='error',
+        dest='log_level',
+        help='Log level (default: "error")')
 
     return parser.parse_args()
 
@@ -60,6 +72,8 @@ if __name__ == "__main__":
     shelfmanager = args.shelfmanager
     epics_prefix = args.epics_prefix
     use_gui = args.use_gui
+    port_number = args.port_number
+    log_level = args.log_level
 
     # Check if shelfmanager is online
     print(f"Trying to ping the shelfmanager '{shelfmanager}'...")
@@ -80,11 +94,20 @@ if __name__ == "__main__":
     if not epics_prefix:
         epics_prefix = shelfmanager
 
+    # Setup the logger level. Set the 'Error' level by default
+    logger = logging.getLogger('pyrogue')
+    if log_level == 'info':
+        logger.setLevel(rogue.Logging.Info)
+    elif log_level == 'warning':
+        logger.setLevel(rogue.Logging.Warning)
+    else:
+        logger.setLevel(rogue.Logging.Error)
+
     # Start the ATCA IPMI monitor
     ipmi = AtcaIpmiMonitor(shelfmanager=shelfmanager)
 
     # Create the ATCA crate root object
-    root = AtcaCrateRoot(ipmi=ipmi, serverPort=9100)
+    root = AtcaCrateRoot(ipmi=ipmi, serverPort=port_number)
     root.start()
 
     # Create the EPICS server
