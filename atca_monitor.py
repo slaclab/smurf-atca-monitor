@@ -43,6 +43,14 @@ def get_args():
              '(default: the shelfmanager node name)')
 
     parser.add_argument(
+        '--port', '-p',
+        type=int,
+        required=False,
+        defalt=9100,
+        dest='port_number',
+        help='Rogue server port number')
+
+    parser.add_argument(
         '--gui', '-g',
         action='store_true',
         dest='use_gui',
@@ -59,6 +67,7 @@ if __name__ == "__main__":
     shelfmanager = args.shelfmanager
     epics_prefix = args.epics_prefix
     use_gui = args.use_gui
+    port_number = args.port_number
 
     # Check if shelfmanager is online
     print(f"Trying to ping the shelfmanager '{shelfmanager}'...")
@@ -83,7 +92,7 @@ if __name__ == "__main__":
     ipmi = AtcaIpmiMonitor(shelfmanager=shelfmanager)
 
     # Create the ATCA crate root object
-    root = AtcaCrateRoot(ipmi=ipmi, serverPort=9100)
+    root = AtcaCrateRoot(ipmi=ipmi, serverPort=port_number)
     root.start()
 
     # Create the EPICS server
