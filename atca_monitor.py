@@ -3,7 +3,6 @@
 import argparse
 import subprocess
 import os
-import sys
 import logging
 import rogue
 import pyrogue
