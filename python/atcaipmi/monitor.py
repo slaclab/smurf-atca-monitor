@@ -87,16 +87,15 @@ class AtcaIpmiMonitorBase():
             self.ipmb_address = ipmb_address
         except pyipmi.errors.CompletionCodeError as e:
             self._log.error(
-                "IPMI returned with completion code 0x{:02x} while trying to "
-                "establish connection to IPMB address = 0x{:02x}"
-                .format(e.cc, ipmb_address))
+                f"IPMI returned with completion code 0x{e.cc:02x} while "
+                "trying to establish connection to IPMB address = "
+                f"0x{ipmb_address:02x}")
             self.ipmb_address = -1
             return
         except pyipmi.errors.IpmiTimeoutError as e:
             self._log.error(
                 "IPMI timeout error while trying to establish connection to "
-                "to IPMB address = 0x{:02x}: {}"
-                .format(ipmb_address, e))
+                f"to IPMB address = 0x{ipmb_address:02x}: {e}")
             self.ipmb_address = -1
 
     def _scan_sensors(self, keys):
@@ -118,8 +117,7 @@ class AtcaIpmiMonitorBase():
         """
 
         self._log.info(
-            "Scanning for sensors on IPMB 0x{:02x}..."
-            .format(self.ipmb_address))
+            f"Scanning for sensors on IPMB 0x{self.ipmb_address:02x}...")
 
         # Point to the device on the sensors dictionary based on the keys
         d = self.sensors
@@ -138,14 +136,13 @@ class AtcaIpmiMonitorBase():
                 return
         except pyipmi.errors.CompletionCodeError as e:
             self._log.error(
-                "IPMI returned with completion code 0x{:02x} Error for this "
-                "device (IPMB address = 0x{:02x})"
-                .format(e.cc, self.ipmb_address))
+                f"IPMI returned with completion code 0x{e.cc:02x} Error for "
+                f"this device (IPMB address = 0x{self.ipmb_address:02x})")
             return
         except pyipmi.errors.IpmiTimeoutError as e:
             self._log.error(
                 "IPMI timeout error for this device (IPMB address = "
-                "0x{:02x}): {})".format(self.ipmb_address, e))
+                f"0x{self.ipmb_address:02x}): {e})")
             return
 
         # Iterate over the sdr entries and look for sensors
@@ -214,17 +211,16 @@ class AtcaIpmiMonitorBase():
 
             except pyipmi.errors.CompletionCodeError as e:
                 self._log.error(
-                    "IPMI returned with completion code 0x{:02x} Error for "
-                    "this device (IPMB address = {})"
-                    .format(e.cc, self.ipmb_address))
+                    f"IPMI returned with completion code 0x{e.cc:02x} error"
+                    "for this device (IPMB address = "
+                    f"0x{self.ipmb_address:02x})")
                 return
             except pyipmi.errors.IpmiTimeoutError as e:
                 self._log.error(
                     "IPMI timeout error while scanning this device "
-                    "(IPMB address = 0x{:02x}): {}"
-                    .format(self.ipmb_address, e))
+                    f"(IPMB address = 0x{self.ipmb_address:02x}): {e}")
 
-        self._log.info("Done! {} sensors found.".format(len(d)))
+        self._log.info(f"Done! {len(d)} sensors found.")
 
     def _search_sensors(self, keys):
         """
@@ -245,8 +241,8 @@ class AtcaIpmiMonitorBase():
         """
 
         self._log.info(
-            "Searching for sensors on IPMB 0x{:02x}..."
-            .format(self.ipmb_address))
+            "Searching for sensors on IPMB address "
+            f"0x{self.ipmb_address:02x}...")
 
         # Point to the device on the sensors dictionary based on the keys
         d = self.sensors
@@ -265,15 +261,13 @@ class AtcaIpmiMonitorBase():
                 return
         except pyipmi.errors.CompletionCodeError as e:
             self._log.error(
-                "IPMI returned with completion code 0x{:02x} Error for this "
-                "device (IPMB address = 0x{:02x})"
-                .format(e.cc, self.ipmb_address))
+                f"IPMI returned with completion code 0x{e.cc:02x} Error for "
+                f"this device (IPMB address = 0x{self.ipmb_address:02x})")
             return
         except pyipmi.errors.IpmiTimeoutError as e:
             self._log.error(
                 "IPMI timeout error for this device (IPMB "
-                "address = 0x{:02x}): {}."
-                .format(self.ipmb_address, e))
+                f"address = 0x{self.ipmb_address:02x}): {e}")
             return
 
         # Sensor found counter
@@ -305,18 +299,17 @@ class AtcaIpmiMonitorBase():
 
             except pyipmi.errors.CompletionCodeError as e:
                 self._log.error(
-                    "IPMI returned with completion code 0x{:02x} Error for "
-                    "this device (IPMB address = {})"
-                    .format(e.cc, self.ipmb_address))
+                    f"IPMI returned with completion code 0x{e.cc:02x} error "
+                    "for this device (IPMB address = "
+                    f"0x{self.ipmb_address:02x})")
                 return
             except pyipmi.errors.IpmiTimeoutError as e:
                 self._log.error(
                     "IPMI timeout error while scanning this device "
-                    "(IPMB address = 0x{:02x}): {}"
-                    .format(self.ipmb_address, e))
+                    f"(IPMB address = 0x{self.ipmb_address:02x}): {e}")
                 return
 
-        self._log.info("Done! {} sensors found.".format(count))
+        self._log.info(f"Done! {count} sensors found.")
 
     def get_sensors(self, keys):
         """
@@ -390,15 +383,15 @@ class AtcaIpmiMonitorBase():
                     return value
         except pyipmi.errors.CompletionCodeError as e:
             self._log.error(
-                "IPMI returned with completion code 0x{:02x} while reading "
-                "sensor number {} at IPMB address {}."
-                .format(e.cc, sensor['sensor'].number, self.ipmb_address))
+                f"IPMI returned with completion code 0x{e.cc:02x} while "
+                f"reading sensor number {sensor['sensor'].number} at IPMB "
+                f"address 0x{self.ipmb_address:02x}")
             return 0
         except pyipmi.errors.IpmiTimeoutError as e:
             self._log.error(
-                "IPMI timeout error while reading sensor number {}"
-                "at IPMB address 0x{:02x}: {}"
-                .format(sensor['sensor'].number, self.ipmb_address, e))
+                f"IPMI timeout error while reading sensor number "
+                f"{sensor['sensor'].number} at IPMB address "
+                f"0x{self.ipmb_address:02x}: {e}")
             return 0
 
     def _read_fru_product_info(self, fru_id):
@@ -440,7 +433,7 @@ class AtcaIpmiMonitorBase():
                         # format. It is stored as binary value, instead of a
                         # string.
                         field_val = \
-                            ''.join("{:02x}".format(ord(b)) for b in v.value)
+                            ''.join(f"{ord(b):02x}" for b in v.value)
                     else:
                         field_val = v.value.strip()
 
@@ -487,8 +480,8 @@ class AtcaIpmiMonitorBase():
             if resp[0] != 0:
                 self._log.error(
                     "Error while trying to read the AMC EEPROM on IPMB "
-                    "address {}, bay {}. Got error code: 0x{:02x}"
-                    .format(self.ipmb_address, bay, resp[0]))
+                    f"address 0x{self.ipmb_address:02x}, bay {bay}. Got error "
+                    f"code: 0x{resp[0]:02x}")
                 return
 
             eeprom = eeprom + resp[1:]
@@ -547,8 +540,8 @@ class AtcaIpmiMonitorBase():
             if resp[0] != 0:
                 self._log.error(
                     "Error while trying to read the AMC EEPROM on IPMB "
-                    "address {}. Got error code: 0x{:02x}"
-                    .format(self.ipmb_address, resp[0]))
+                    f"address 0x{self.ipmb_address:02x}. Got error code: "
+                    f"0x{resp[0]:02x}")
                 return
 
             eeprom = eeprom + resp[1:]
@@ -598,23 +591,21 @@ class AtcaIpmiMonitorBase():
                 # which is common. So, use a warning message instead of an
                 # error.
                 self._log.warning(
-                    "IPMI raw command returned error code 0x{:02x} while "
-                    "reading ID for slot {} bay {}"
-                    .format(id[0], slot, bay))
+                    f"IPMI raw command returned error code 0x{id[0]:02x} "
+                    f"while reading ID for slot {slot} bay {bay}")
                 return ''
         except pyipmi.errors.CompletionCodeError as e:
             self._log.error(
-                "IPMI returned with completion code 0x{:02x} while reading "
-                "ID for slot {} bay {}"
-                .format(e.cc, slot, bay))
+                f"IPMI returned with completion code 0x{e.cc:02x} while "
+                f"reading ID for slot {slot} bay {bay}")
             return ''
         except pyipmi.errors.IpmiTimeoutError as e:
             # A timeout will happen when a device (carrier, AMC, or RTM) is not
             # present, which is common. So, use a warning message instead of
             # an error.
             self._log.warning(
-                "IPMI timeout error while reading ID for slot {}, bay {}: {}"
-                .format(slot, bay, e))
+                f"IPMI timeout error while reading ID for slot {slot}, "
+                f"bay {bay}: {e}")
             return ''
 
     def set_sensor_cb(self, keys, function):
