@@ -46,7 +46,7 @@ def get_args():
         '--port', '-p',
         type=int,
         required=False,
-        defalt=9100,
+        default=9100,
         dest='port_number',
         help='Rogue server port number')
 
