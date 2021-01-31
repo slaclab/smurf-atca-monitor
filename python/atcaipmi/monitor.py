@@ -394,6 +394,41 @@ class AtcaIpmiMonitorBase():
                 f"0x{self.ipmb_address:02x}: {e}")
             return 0
 
+    def _read_fan(self, fru_id, data):
+        """
+        Read the fan current speed, minimum and maximum speed levels.
+
+        Args:
+            fru_id (int): the fan FRU ID number.
+            data (dict):  the 'FanTrays' data dictionary, where the read values
+                          for the keys 'speed_level', 'minimum_speed_level',
+                          and 'maximum_speed_level' will be written.
+
+        Returns:
+            None.
+
+        Notes:
+            Before calling this method, a session must has already been opened
+            by calling the method _open_target(ipmb_address)
+        """
+        try:
+            data['speed_level']['value'] = \
+                self.ipmi.get_fan_level(fru_id)[0]
+            data['minimum_speed_level']['value'] = \
+                self.ipmi.get_fan_speed_properties(fru_id).minimum_speed_level
+            data['maximum_speed_level']['value'] = \
+                self.ipmi.get_fan_speed_properties(fru_id).maximum_speed_level
+        except pyipmi.errors.CompletionCodeError as e:
+            self._log.error(
+                f"IPMI returned with completion code 0x{e.cc:02x} while "
+                f"reading fan with fru_id = {fru_id}.")
+            return
+        except pyipmi.errors.IpmiTimeoutError as e:
+            self._log.error(
+                "IPMI timeout error while reading fan with fru_id = "
+                f"{fru_id}: {e}")
+            return
+
     def _read_fru_product_info(self, fru_id):
         """
         Read the FRU product info area
@@ -792,19 +827,11 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                     for fn, sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
                         try:
-                            sn['speed_level']['value'] = \
-                                self.ipmi.get_fan_level(fru_id)[0]
-                            sn['minimum_speed_level']['value'] = \
-                                self.ipmi.get_fan_speed_properties(
-                                    fru_id).minimum_speed_level
-                            sn['maximum_speed_level']['value'] = \
-                                self.ipmi.get_fan_speed_properties(
-                                    fru_id).maximum_speed_level
+                            self._read_fan(fru_id, sn)
                         except Exception as e:
                             self._log.error(
-                                f"{datetime.now()} : Exception while trying "
-                                "to read the fan speed levels (fru_id = "
-                                f"{fru_id}): {e}\n")
+                                "Unexpected exception while trying to read "
+                                f"fan with fru_id = {fru_id}: {e}")
                 elif n == 'CrateInfo':
                     # This information is static, we don't need to update it.
                     pass
@@ -813,8 +840,8 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                         s['value'] = self._read_sensor(s)
                     except Exception as e:
                         self._log.error(
-                            f"{datetime.now()} : Unexpected exception while "
-                            f"trying to read sensor {n}: {e}\n")
+                            "Unexpected exception while trying to read sensor "
+                            f"{n}: {e}")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
@@ -872,9 +899,8 @@ class AtcaIpmiStaticMonitor(AtcaIpmiMonitorBase):
                                     self._read_sensor(s)
                         except Exception as e:
                             self._log.error(
-                                f"{datetime.now()} : Unexpected exception "
-                                f"while trying to read sensor {n} on "
-                                f"slot # {i}: {e}")
+                                "Unexpected exception while trying to read "
+                                f"sensor {n} on slot # {i}: {e}")
                 else:
                     # If we don't read a valid ID, we will need to search for
                     # sensors on the cycle we read a valid ID.
@@ -983,19 +1009,11 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                     for fn, sn in s.items():
                         fru_id = sn['speed_level']['fru_id']
                         try:
-                            sn['speed_level']['value'] = \
-                                self.ipmi.get_fan_level(fru_id)[0]
-                            sn['minimum_speed_level']['value'] = \
-                                self.ipmi.get_fan_speed_properties(
-                                    fru_id).minimum_speed_level
-                            sn['maximum_speed_level']['value'] = \
-                                self.ipmi.get_fan_speed_properties(
-                                    fru_id).maximum_speed_level
+                            self._read_fan(fru_id, sn)
                         except Exception as e:
                             self._log.error(
-                                f"{datetime.now()} : Exception while trying "
-                                "to read the fan speed levels (fru_id = "
-                                f"{fru_id}): {e}\n")
+                                "Unexpected exception while trying to read "
+                                f"fan with fru_id = {fru_id}: {e}")
                 elif n == 'CrateInfo':
                     # This information is static, so we don't need to update it
                     pass
@@ -1004,8 +1022,8 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                         s['value'] = self._read_sensor(s)
                     except Exception as e:
                         self._log.error(
-                            f"{datetime.now()} : Unexpected exception while "
-                            f"trying to read sensor {n}: {e}\n")
+                            "Unexpected exception while trying to read sensor "
+                            f"{n}: {e}")
 
                 # Call callback function, if any
                 if 'callback' in s and s['callback'] is not None:
@@ -1023,8 +1041,8 @@ class AtcaIpmiDynamicMonitor(AtcaIpmiMonitorBase):
                                 self._read_sensor(s)
                     except Exception as e:
                         self._log.error(
-                            f"{datetime.now()} : Unexpected exception while "
-                            f"trying to read sensor {n} on slot # {i}: {e}")
+                            "Unexpected exception while trying to read sensor "
+                            f"{n} on slot # {i}: {e}")
 
             # Update the poll period
             self.poll_period = time.time() - now
