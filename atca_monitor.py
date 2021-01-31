@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import getopt
+import argparse
 import subprocess
 import os
 import sys
@@ -21,66 +21,48 @@ logger = logging.getLogger('pyrogue')
 logger.setLevel(rogue.Logging.Error)
 
 
-def usage(name):
+def get_args():
     """
-    Usage message.
-
-    Args:
-        name: name of this script.
-
-    Returns:
-        None.
+    Parse and return the inputs arguments.
     """
-    print("Usage: {} -S|--shelfmanager <shelfmanager> "
-          "[-e|--epics prefix] [-g|--gui] [-h|--help]".format(name))
-    print("")
-    print("    -S|--shelfmanager <shelfmanager> : "
-          "Node name of the ATCA shelfmanager.")
-    print("    -e|--epics        <prefix>       : "
-          "Start an EPICS server using <prefix> as the PV name prefix.")
-    print("                                       "
-          "(default: the shelfmanager node name)")
-    print("    -g|--gui                         : "
-          "Start the server with a GUI.")
-    print("    -h|--help                        : "
-          "Show this message")
-    print("")
-    print("")
+    parser = argparse.ArgumentParser(
+        description='SMuRF ATCA Monitor')
+
+    parser.add_argument(
+        '--shelfmanager', '-S',
+        type=str,
+        required=True,
+        dest='shelfmanager',
+        help='Node name of the ATCA shelfmanager')
+
+    parser.add_argument(
+        '--epics', '-e',
+        type=str,
+        required=False,
+        dest='epics_prefix',
+        help='Start an EPICS server using this PV name prefix '
+             '(default: the shelfmanager node name)')
+
+    parser.add_argument(
+        '--gui', '-g',
+        action='store_true',
+        dest='use_gui',
+        help='Start the server with a GUI')
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
 
-    shelfmanager = ""
-    epics_prefix = ""
-    use_gui = False
-    # Read Arguments
-    try:
-        opts, _ = getopt.getopt(
-            sys.argv[1:],
-            "S:e:gh",
-            ["shelfmanager", "epics", "gui", "help"])
-    except getopt.GetoptError:
-        usage(sys.argv[0])
-        sys.exit()
+    # Get input arguments
+    args = get_args()
 
-    for opt, arg in opts:
-        if opt in ("-h", "--help"):
-            usage(sys.argv[0])
-            sys.exit()
-        elif opt in ("-S", "--shelfmanager"):
-            shelfmanager = arg
-        elif opt in ("-g", "--gui"):
-            use_gui = True
-        elif opt in ("-e", "--epics"):
-            epics_prefix = arg
-
-    # Check mandatory arguments
-    if not shelfmanager:
-        print("ERROR!. Must specify a shelfmanager.")
-        exit()
+    shelfmanager = args.shelfmanager
+    epics_prefix = args.epics_prefix
+    use_gui = args.use_gui
 
     # Check if shelfmanager is online
-    print("Trying to ping the shelfmanager '{}'...".format(shelfmanager))
+    print(f"Trying to ping the shelfmanager '{shelfmanager}'...")
     try:
         dev_null = open(os.devnull, 'w')
         subprocess.check_call(
@@ -106,7 +88,7 @@ if __name__ == "__main__":
     root.start()
 
     # Create the EPICS server
-    print("Starting EPICS server using prefix \"{}\"".format(epics_prefix))
+    print(f"Starting EPICS server using prefix \"{epics_prefix}\"")
     epics = pyrogue.protocols.epics.EpicsCaServer(base=epics_prefix, root=root)
     epics.start()
 
