@@ -35,13 +35,24 @@ Where **TAG** represents the specific tagged version you want to use.
 The container runs by default the python script `atca_monitor.py`which takes the following arguments:
 
 ```
-atca_monitor.py -S|--shelfmanager <shelfmanager> [-e|--epics prefix] [-g|--gui] [-h|--help]
+usage: atca_monitor.py [-h] --shelfmanager SHELFMANAGER [--epics EPICS_PREFIX]
+                       [--port PORT_NUMBER] [--gui]
+                       [--log-level {info,warning,error}]
 
-    -S|--shelfmanager <shelfmanager> : Node name of the ATCA shelfmanager.
-    -e|--epics        <prefix>       : Start an EPICS server using <prefix> as the PV name prefix.
-                                       (default: the shelfmanager node name)
-    -g|--gui                         : Start the server with a GUI.
-    -h|--help                        : Show this message
+SMuRF ATCA Monitor
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --shelfmanager SHELFMANAGER, -S SHELFMANAGER
+                        Node name of the ATCA shelfmanager
+  --epics EPICS_PREFIX, -e EPICS_PREFIX
+                        Start an EPICS server using this PV name prefix
+                        (default: the shelfmanager node name)
+  --port PORT_NUMBER, -p PORT_NUMBER
+                        Rogue server port number (default: 9100)
+  --gui, -g             Start the server with a GUI
+  --log-level {info,warning,error}
+                        Log level (default: "error")
 ```
 
 The command to run the container looks something like this:
