@@ -2,6 +2,7 @@
 
 import pyrogue
 
+
 class IpmiThread(pyrogue.Device):
     """
     Device to monitor the status of the IPMI monitor thread
@@ -15,8 +16,16 @@ class IpmiThread(pyrogue.Device):
     Returns:
         None.
     """
-    def __init__(self, ipmi, name="IpmiThread", description="Information about the IPMI thread", **kargs):
-        super().__init__(name=name, description=description, **kargs)
+    def __init__(
+            self,
+            ipmi,
+            name="IpmiThread",
+            description="Information about the IPMI thread",
+            **kargs):
+        super().__init__(
+            name=name,
+            description=description,
+            **kargs)
 
         self.add(pyrogue.LocalVariable(
             name='TimeStamp',
@@ -24,7 +33,7 @@ class IpmiThread(pyrogue.Device):
             value='',
             mode='RO',
             pollInterval=1,
-            localGet= lambda: ipmi.get_timestamp()))
+            localGet=lambda: ipmi.get_timestamp()))
 
         self.add(pyrogue.LocalVariable(
             name='PollPeriod',
@@ -33,7 +42,7 @@ class IpmiThread(pyrogue.Device):
             mode='RO',
             pollInterval=1,
             units='s',
-            localGet= lambda: round(ipmi.get_pollperiod(),2)))
+            localGet=lambda: round(ipmi.get_pollperiod(), 2)))
 
         self.add(pyrogue.LocalVariable(
             name='MinPollPeriod',
@@ -42,8 +51,9 @@ class IpmiThread(pyrogue.Device):
             mode='RW',
             pollInterval=1,
             units='s',
-            localGet= lambda: ipmi.get_min_poll_period(),
-            localSet= lambda dev, var, value: ipmi.set_min_poll_period(value)))
+            localGet=lambda: ipmi.get_min_poll_period(),
+            localSet=lambda dev, var, value: ipmi.set_min_poll_period(value)))
+
 
 class BaseDevice(pyrogue.Device):
     """
@@ -66,8 +76,8 @@ class BaseDevice(pyrogue.Device):
         # - Get the list of sensors
         d = ipmi.get_sensors(keys=keys)
         # - Add local variables for each sensor
-        for n,s in d.items():
-            if not 'value' in s:
+        for n, s in d.items():
+            if 'value' not in s:
                 # If the dictionary doesn't have the 'value' field,
                 # it is a container. Expand it as a new device.
                 self.add(BaseDevice(
@@ -83,7 +93,9 @@ class BaseDevice(pyrogue.Device):
                     value=s['value'],
                     mode='RO',
                     pollInterval=1,
-                    localGet= lambda dev, var: ipmi.get_sensor_value(keys=keys+[var.name])))
+                    localGet=lambda dev, var: ipmi.get_sensor_value(
+                        keys=keys+[var.name])))
+
 
 class AtcaCrateRoot(pyrogue.Root):
     """
@@ -95,8 +107,16 @@ class AtcaCrateRoot(pyrogue.Root):
     Returns:
         None.
     """
-    def __init__(self, ipmi, serverPort=0, **kargs):
-        super().__init__(name='Crate', description='ATCA crate', serverPort=serverPort, **kargs)
+    def __init__(
+            self,
+            ipmi,
+            serverPort=0,
+            **kargs):
+        super().__init__(
+            name='Crate',
+            description='ATCA crate',
+            serverPort=serverPort,
+            **kargs)
 
         # Add information about the IPMI thread
         self.add(IpmiThread(ipmi=ipmi))
