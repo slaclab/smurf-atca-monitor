@@ -48,7 +48,7 @@ def get_args():
         required=False,
         default=9100,
         dest='port_number',
-        help='Rogue server port number')
+        help='Rogue server port number (default: 9100)')
 
     parser.add_argument(
         '--gui', '-g',
