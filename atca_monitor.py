@@ -6,7 +6,6 @@ import os
 import logging
 import rogue
 import pyrogue
-import pyrogue.protocols.epics
 
 # Import the ATCA IPMI monitor (Static or DYnamic version)
 # from atcaipmi.monitor import AtcaIpmiDynamicMonitor as AtcaIpmiMonitor
@@ -29,14 +28,6 @@ def get_args():
         required=True,
         dest='shelfmanager',
         help='Node name of the ATCA shelfmanager')
-
-    parser.add_argument(
-        '--epics', '-e',
-        type=str,
-        required=False,
-        dest='epics_prefix',
-        help='Start an EPICS server using this PV name prefix '
-             '(default: the shelfmanager node name)')
 
     parser.add_argument(
         '--port', '-p',
@@ -70,7 +61,6 @@ if __name__ == "__main__":
     args = get_args()
 
     shelfmanager = args.shelfmanager
-    epics_prefix = args.epics_prefix
     use_gui = args.use_gui
     port_number = args.port_number
     log_level = args.log_level
@@ -89,11 +79,6 @@ if __name__ == "__main__":
         print("    ERROR: shelfmanager can't be reached!")
         exit()
 
-    # Use the shelfmanager as EPICS prefix, unless a different one
-    # was defined by the user
-    if not epics_prefix:
-        epics_prefix = shelfmanager
-
     # Setup the logger level. Set the 'Error' level by default
     logger = logging.getLogger('pyrogue')
     if log_level == 'info':
@@ -107,25 +92,17 @@ if __name__ == "__main__":
     ipmi = AtcaIpmiMonitor(shelfmanager=shelfmanager)
 
     # Create the ATCA crate root object
-    root = AtcaCrateRoot(ipmi=ipmi, serverPort=port_number)
-    root.start()
+    with AtcaCrateRoot(ipmi=ipmi, serverPort=port_number) as root:
 
-    # Create the EPICS server
-    print(f"Starting EPICS server using prefix \"{epics_prefix}\"")
-    epics = pyrogue.protocols.epics.EpicsCaServer(base=epics_prefix, root=root)
-    epics.start()
+        if use_gui:
 
-    if use_gui:
-        # Create the GUI
-        import pyrogue.pydm
-        pyrogue.pydm.runPyDM(root=root)
+            import pyrogue.pydm
+            pyrogue.pydm.runPyDM(serverList=root.zmqServer.address)
 
-        print("GUI was closed...")
-    else:
-        # Stop the server when Crtl+C is pressed
-        pyrogue.waitCntrlC()
+            print("GUI was closed...")
+        else:
+            # Stop the server when Crtl+C is pressed
+            pyrogue.waitCntrlC()
 
-        print("Closing server...")
+            print("Closing server...")
 
-    epics.stop()
-    root.stop()

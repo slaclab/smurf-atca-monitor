@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pyrogue
+import pyrogue.interfaces
 
 
 class IpmiThread(pyrogue.Device):
@@ -115,7 +116,6 @@ class AtcaCrateRoot(pyrogue.Root):
         super().__init__(
             name='Crate',
             description='ATCA crate',
-            serverPort=serverPort,
             **kargs)
 
         # Add information about the IPMI thread
@@ -127,3 +127,8 @@ class AtcaCrateRoot(pyrogue.Root):
             description="Sensors on the crate",
             keys=[],
             ipmi=ipmi))
+
+        # Add zmq server
+        self.zmqServer = pyrogue.interfaces.ZmqServer(root=self, addr='*', port=serverPort)
+        self.addInterface(self.zmqServer)
+
